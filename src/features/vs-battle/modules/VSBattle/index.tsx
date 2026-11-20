@@ -14,15 +14,27 @@ import { usePokemonStore } from "@/store/app/pokemonStore";
 import { useSpawnEnemies } from "@/hooks/common/battle/useSpawnEnemies";
 import { useBattleEngine } from "@/hooks/common/battle/useBattleEngine";
 import { aliveBench } from "@/features/vs-battle/engine/reducer";
-import { toSlug } from "@/utils/pokemon-utils";
+import { catchChance, toSlug } from "@/utils/pokemon-utils";
+import { useNavigate } from "@tanstack/react-router";
+import { clearSession } from "@/hooks/common/battle/useBattleEngine";
+import { useWorldStore } from "@/store/app/worldStore";
+import { findTrainer } from "@/features/world/data/maps";
+import WorldCatch from "@/features/world/components/WorldCatch";
 
 interface Props {
   mode: "1v1" | "3v3";
   team: Array<string>;
   seed: number;
+  /** Present when the battle was started from the overworld. */
+  world?: { ids: Array<number>; levels: Array<number>; trainerId?: string };
 }
 
-const VersusBattleModule = ({ mode, team, seed }: Props) => {
+const VersusBattleModule = ({ mode, team, seed, world }: Props) => {
+  const navigate = useNavigate();
+  const setOutcome = useWorldStore((s) => s.setOutcome);
+  const trainer = findTrainer(world?.trainerId);
+  const reported = useRef(false);
+  const caughtRef = useRef<string | undefined>(undefined);
   const { pokemons } = usePokemonStore();
   const logRef = useRef<HTMLDivElement>(null);
   const [switchOpen, setSwitchOpen] = useState<boolean>(false);
@@ -40,6 +52,9 @@ const VersusBattleModule = ({ mode, team, seed }: Props) => {
     count: mode === "3v3" ? 3 : 1,
     refLevel,
     seed,
+    fixedIds: world?.ids,
+    fixedLevels: world?.levels,
+    statScale: world ? 0.85 : 1,
   });
 
   const { state, view, actions } = useBattleEngine({
@@ -48,7 +63,34 @@ const VersusBattleModule = ({ mode, team, seed }: Props) => {
     enemyTeam: enemies,
     seed,
     team,
+    trainerName: trainer?.title,
   });
+
+  // Tell the world how it went, once, as soon as the battle is decided.
+  useEffect(() => {
+    if (!world || !state || state.phase !== "over" || reported.current) return;
+    reported.current = true;
+    setOutcome({
+      kind: world.trainerId ? "trainer" : "wild",
+      trainerId: world.trainerId,
+      won: state.winner === "player",
+    });
+  }, [world, state, setOutcome]);
+
+  const backToWorld = () => {
+    clearSession();
+    const outcome = useWorldStore.getState().lastOutcome;
+    if (outcome && caughtRef.current)
+      setOutcome({ ...outcome, caught: caughtRef.current });
+    navigate({ to: "/world" });
+  };
+
+  const runFromWild = () => {
+    if (!world || !state) return actions.surrender();
+    clearSession();
+    setOutcome({ kind: "wild", won: false, fled: true });
+    navigate({ to: "/world" });
+  };
 
   useEffect(() => {
     const img = new Image();
@@ -242,9 +284,24 @@ const VersusBattleModule = ({ mode, team, seed }: Props) => {
                   winner={state.winner}
                   expGained={view.expGained}
                   levelUps={view.levelUps}
-                  onFindNew={actions.findNew}
-                  onLeave={actions.leave}
-                />
+                  onFindNew={world ? undefined : actions.findNew}
+                  onLeave={world ? backToWorld : actions.leave}
+                  leaveLabel={world ? "Back to World" : undefined}>
+                  {world &&
+                    !world.trainerId &&
+                    state.winner === "player" &&
+                    state.enemy.team[0] && (
+                      <WorldCatch
+                        wild={state.enemy.team[0]}
+                        chance={catchChance(
+                          Object.values(
+                            state.enemy.team[0].base_stats ?? {},
+                          ).reduce((a, b) => a + b, 0) || 300,
+                        )}
+                        onCaught={(nick) => (caughtRef.current = nick)}
+                      />
+                    )}
+                </ResultPanel>
               ) : (
                 <>
                   <T.MeterStack>
@@ -268,8 +325,10 @@ const VersusBattleModule = ({ mode, team, seed }: Props) => {
                   />
                   <T.RunAwayButton
                     disabled={locked}
-                    onClick={actions.surrender}>
-                    Run Away
+                    onClick={
+                      world && !world.trainerId ? runFromWild : actions.surrender
+                    }>
+                    {world?.trainerId ? "Give Up" : "Run Away"}
                   </T.RunAwayButton>
                 </>
               )}

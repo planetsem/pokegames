@@ -4,6 +4,7 @@ import { Toaster, toast } from "react-hot-toast";
 import NoSignal from "@/components/ui/NoSignal";
 import { globalStyle } from "@/styles/global.style";
 import { useOnlineStatus } from "@/hooks/common/useOnlineStatus";
+import { useAuthStore } from "@/store/app/authStore";
 
 interface AppProviderProps {
   children: React.ReactNode;
@@ -11,6 +12,8 @@ interface AppProviderProps {
 
 const AppProvider = ({ children }: AppProviderProps) => {
   const isOnline = useOnlineStatus();
+
+  useEffect(() => useAuthStore.getState().init(), []);
 
   useEffect(() => {
     if (!isOnline) {

@@ -62,12 +62,14 @@ export function createBattle(
   mode: BattleState["mode"],
   playerTeam: Array<IMyPokemon>,
   enemyTeam: Array<IMyPokemon>,
+  trainerName?: string,
 ): BattleState {
   const player = { team: playerTeam.map(toCombatant), active: 0 };
   const enemy = { team: enemyTeam.map(toCombatant), active: 0 };
   player.team[0] = { ...player.team[0], participated: true };
   return {
     mode,
+    trainerName,
     player,
     enemy,
     phase: "intro",
@@ -80,7 +82,9 @@ export function createBattle(
 export const endIntro = (s: BattleState): BattleState =>
   s.phase === "intro"
     ? appendLog({ ...s, phase: "select" }, [
-        `A wild ${activeOf(s.enemy).name} appeared!`,
+        s.trainerName
+          ? `${s.trainerName} sent out ${activeOf(s.enemy).name}!`
+          : `A wild ${activeOf(s.enemy).name} appeared!`,
         `Go, ${activeOf(s.player).nickname}!`,
       ])
     : s;

@@ -1,4 +1,5 @@
 import * as S from "./index.style";
+import type { ReactNode } from "react";
 import type { Side } from "@/features/vs-battle/engine/types";
 import type { ExpGrant } from "@/utils/leveling";
 
@@ -6,8 +7,11 @@ interface Props {
   winner: Side;
   expGained: Array<ExpGrant>;
   levelUps: Array<{ nickname: string; level: number }>;
-  onFindNew: () => void;
+  onFindNew?: () => void;
   onLeave: () => void;
+  leaveLabel?: string;
+  /** Extra content above the buttons, e.g. the catch prompt in the world. */
+  children?: ReactNode;
 }
 
 /** Sum grants per nickname so a 3v3 with three KOs shows one line per Pokemon. */
@@ -25,6 +29,8 @@ const ResultPanel = ({
   levelUps,
   onFindNew,
   onLeave,
+  leaveLabel = "Back to Pokedex",
+  children,
 }: Props) => {
   const won = winner === "player";
   const rewards = totals(expGained);
@@ -79,9 +85,13 @@ const ResultPanel = ({
         </S.RewardList>
       </S.Rewards>
 
+      {children}
+
       <S.Actions>
-        <S.FindButton onClick={onFindNew}>Find New Opponent</S.FindButton>
-        <S.LeaveButton onClick={onLeave}>Back to Pokedex</S.LeaveButton>
+        {onFindNew && (
+          <S.FindButton onClick={onFindNew}>Find New Opponent</S.FindButton>
+        )}
+        <S.LeaveButton onClick={onLeave}>{leaveLabel}</S.LeaveButton>
       </S.Actions>
     </S.Panel>
   );

@@ -44,6 +44,8 @@ export type BattleEvent =
 
 export interface BattleState {
   mode: "1v1" | "3v3";
+  /** Set for trainer battles in the world; changes the intro line. */
+  trainerName?: string;
   player: Team;
   enemy: Team;
   phase: Phase;

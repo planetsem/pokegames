@@ -33,7 +33,7 @@ const StartScreenModule = () => {
         <motion.div variants={item}>
           <T.Blink>
             <Button
-              onClick={() => navigate({ to: "/pokemons" })}
+              onClick={() => navigate({ to: "/world" })}
               variant="light">
               Press Start
             </Button>

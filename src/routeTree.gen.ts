@@ -10,14 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AccountRouteImport } from './routes/account'
 import { Route as MyPokemonRouteImport } from './routes/my-pokemon'
 import { Route as VsBattleRouteImport } from './routes/vs-battle'
+import { Route as WorldRouteImport } from './routes/world'
 import { Route as PokemonsIndexRouteImport } from './routes/pokemons.index'
 import { Route as PokemonsPokemonNameRouteImport } from './routes/pokemons.$pokemonName'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AccountRoute = AccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyPokemonRoute = MyPokemonRouteImport.update({
@@ -28,6 +35,11 @@ const MyPokemonRoute = MyPokemonRouteImport.update({
 const VsBattleRoute = VsBattleRouteImport.update({
   id: '/vs-battle',
   path: '/vs-battle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WorldRoute = WorldRouteImport.update({
+  id: '/world',
+  path: '/world',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PokemonsIndexRoute = PokemonsIndexRouteImport.update({
@@ -43,46 +55,68 @@ const PokemonsPokemonNameRoute = PokemonsPokemonNameRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/my-pokemon': typeof MyPokemonRoute
   '/vs-battle': typeof VsBattleRoute
+  '/world': typeof WorldRoute
   '/pokemons/$pokemonName': typeof PokemonsPokemonNameRoute
   '/pokemons/': typeof PokemonsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/my-pokemon': typeof MyPokemonRoute
   '/vs-battle': typeof VsBattleRoute
+  '/world': typeof WorldRoute
   '/pokemons/$pokemonName': typeof PokemonsPokemonNameRoute
   '/pokemons': typeof PokemonsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/account': typeof AccountRoute
   '/my-pokemon': typeof MyPokemonRoute
   '/vs-battle': typeof VsBattleRoute
+  '/world': typeof WorldRoute
   '/pokemons/$pokemonName': typeof PokemonsPokemonNameRoute
   '/pokemons/': typeof PokemonsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/my-pokemon' | '/vs-battle' | '/pokemons/$pokemonName' | '/pokemons/'
+    | '/'
+    | '/account'
+    | '/my-pokemon'
+    | '/vs-battle'
+    | '/world'
+    | '/pokemons/$pokemonName'
+    | '/pokemons/'
   fileRoutesByTo: FileRoutesByTo
   to:
-    '/' | '/my-pokemon' | '/vs-battle' | '/pokemons/$pokemonName' | '/pokemons'
+    | '/'
+    | '/account'
+    | '/my-pokemon'
+    | '/vs-battle'
+    | '/world'
+    | '/pokemons/$pokemonName'
+    | '/pokemons'
   id:
     | '__root__'
     | '/'
+    | '/account'
     | '/my-pokemon'
     | '/vs-battle'
+    | '/world'
     | '/pokemons/$pokemonName'
     | '/pokemons/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AccountRoute: typeof AccountRoute
   MyPokemonRoute: typeof MyPokemonRoute
   VsBattleRoute: typeof VsBattleRoute
+  WorldRoute: typeof WorldRoute
   PokemonsPokemonNameRoute: typeof PokemonsPokemonNameRoute
   PokemonsIndexRoute: typeof PokemonsIndexRoute
 }
@@ -94,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/account': {
+      id: '/account'
+      path: '/account'
+      fullPath: '/account'
+      preLoaderRoute: typeof AccountRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-pokemon': {
@@ -108,6 +149,13 @@ declare module '@tanstack/react-router' {
       path: '/vs-battle'
       fullPath: '/vs-battle'
       preLoaderRoute: typeof VsBattleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/world': {
+      id: '/world'
+      path: '/world'
+      fullPath: '/world'
+      preLoaderRoute: typeof WorldRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pokemons/': {
@@ -129,8 +177,10 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AccountRoute: AccountRoute,
   MyPokemonRoute: MyPokemonRoute,
   VsBattleRoute: VsBattleRoute,
+  WorldRoute: WorldRoute,
   PokemonsPokemonNameRoute: PokemonsPokemonNameRoute,
   PokemonsIndexRoute: PokemonsIndexRoute,
 }

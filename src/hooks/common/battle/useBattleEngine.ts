@@ -56,6 +56,7 @@ interface Opts {
   enemyTeam: Array<IMyPokemon> | null;
   seed: number;
   team: Array<string>;
+  trainerName?: string;
 }
 
 export function useBattleEngine({
@@ -64,6 +65,7 @@ export function useBattleEngine({
   enemyTeam,
   seed,
   team,
+  trainerName,
 }: Opts) {
   const navigate = useNavigate();
   const { damages, showDamage } = useDamageSystem();
@@ -106,7 +108,7 @@ export function useBattleEngine({
     const initial =
       sameBattle && saved.state
         ? { ...saved.state, events: [] }
-        : createBattle(mode, playerTeam, enemyTeam);
+        : createBattle(mode, playerTeam, enemyTeam, trainerName);
     setState(initial);
     setHp({
       player: initial.player.team.map((c) => c.currentHp),

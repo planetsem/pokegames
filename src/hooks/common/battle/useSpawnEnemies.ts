@@ -36,11 +36,14 @@ export function buildEnemy(
   pool: Array<IBattleMove>,
   refLevel: number,
   rng: Rng = Math.random,
+  fixedLevel?: number,
 ): IMyPokemon {
-  const difficulty = getDifficultyParams(refLevel);
+  const difficulty = getDifficultyParams(fixedLevel ?? refLevel);
   const min = Math.max(1, refLevel + difficulty.minLevelAdd);
   const max = refLevel + difficulty.maxLevelAdd;
-  const level = Math.floor(rng() * (max - min + 1)) + min;
+  const level = fixedLevel
+    ? Math.max(1, fixedLevel)
+    : Math.floor(rng() * (max - min + 1)) + min;
 
   const keys = [
     "hp",
@@ -107,18 +110,33 @@ interface Props {
   refLevel: number;
   /** Stable per battle so a re-render never re-rolls the ids. */
   seed: number;
+  /** Fixed species (world encounters, trainers). Overrides count. */
+  fixedIds?: Array<number>;
+  fixedLevels?: Array<number>;
+  /** Multiplies enemy stats; the world uses < 1 so early routes are fair. */
+  statScale?: number;
 }
 
-export function useSpawnEnemies({ count, refLevel, seed }: Props) {
+export function useSpawnEnemies({
+  count,
+  refLevel,
+  seed,
+  fixedIds,
+  fixedLevels,
+  statScale = 1,
+}: Props) {
   const queryClient = useQueryClient();
+  const fixedKey = fixedIds?.join(",") ?? "";
   const ids = useMemo(() => {
+    if (fixedIds?.length) return fixedIds;
     let x = seed || 1;
     const next = () => (x = (x * 1103515245 + 12345) % 2147483648) / 2147483648;
     return Array.from(
       { length: count },
       () => 1 + Math.floor(next() * MAX_POKEMON_ID),
     );
-  }, [count, seed]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [count, seed, fixedKey]);
 
   const results = useQueries({
     queries: ids.map((id, index) => ({
@@ -143,14 +161,21 @@ export function useSpawnEnemies({ count, refLevel, seed }: Props) {
   const isError = results.some((r) => r.isError);
   const enemies = useMemo(() => {
     if (isLoading || isError) return null;
-    return results.map((r, index) =>
-      buildEnemy(
+    return results.map((r, index) => {
+      const enemy = buildEnemy(
         r.data!.detail,
         r.data!.pool,
         refLevel,
         createSeededRng(seed + ids[index] + index + count),
-      ),
-    );
+        fixedLevels?.[index] || undefined,
+      );
+      if (statScale === 1) return enemy;
+      const stats = { ...enemy.stats };
+      (Object.keys(stats) as Array<keyof typeof stats>).forEach((k) => {
+        stats[k] = Math.max(1, Math.round(stats[k] * statScale));
+      });
+      return { ...enemy, stats };
+    });
   }, [
     isLoading,
     isError,
@@ -158,6 +183,8 @@ export function useSpawnEnemies({ count, refLevel, seed }: Props) {
     seed,
     ids,
     count,
+    fixedLevels?.join(","),
+    statScale,
     ...results.map((r) => r.data),
   ]);
 
